@@ -66,7 +66,7 @@ def calcular_volatilidade(df, periodo=30):
 if __name__ == '__main__':
     symbol = "BTCUSDT"
     start_date = "1 Jan, 2019"
-    end_date = "09 Jan, 2024"
+    end_date = "09 Jan, 2025"
     intervalo = Client.KLINE_INTERVAL_1DAY
 
     try:

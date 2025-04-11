@@ -82,19 +82,19 @@ class BitcoinRelator(QMainWindow):
         historico_layout.addLayout(tempo_layout)
 
         interval_layout = QHBoxLayout()
+        btn_10sec = QPushButton("10 Seconds")
         btn_1min = QPushButton("1 Minute")
         btn_10min = QPushButton("10 Minutes")
-        btn_30min = QPushButton("30 Minutes")
         btn_1hour = QPushButton("1 Hour")
 
+        btn_10sec.clicked.connect(lambda: self.definir_intervalo(10))
         btn_1min.clicked.connect(lambda: self.definir_intervalo(1 * 60))
         btn_10min.clicked.connect(lambda: self.definir_intervalo(10 * 60))
-        btn_30min.clicked.connect(lambda: self.definir_intervalo(30 * 60))
         btn_1hour.clicked.connect(lambda: self.definir_intervalo(60 * 60))
 
+        interval_layout.addWidget(btn_10sec)
         interval_layout.addWidget(btn_1min)
         interval_layout.addWidget(btn_10min)
-        interval_layout.addWidget(btn_30min)
         interval_layout.addWidget(btn_1hour)
         historico_layout.addLayout(interval_layout)
 
@@ -153,7 +153,7 @@ class BitcoinRelator(QMainWindow):
             preco = float(preco_data['price'])
 
             # Obter book de ordens
-            orderbook_url = 'https://api.binance.com/api/v3/depth?symbol=BTCUSDT&limit=50'  # Limite de 50 ordens
+            orderbook_url = 'https://api.binance.com/api/v3/depth?symbol=BTCUSDT&limit=1000'  # Limite de ordens
             orderbook_response = requests.get(orderbook_url)
             orderbook_response.raise_for_status()
             orderbook_data = orderbook_response.json()
