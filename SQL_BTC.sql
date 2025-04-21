@@ -225,3 +225,127 @@ SELECT
         ELSE NULL
     END AS correlacao_retorno_volatilidade
 FROM StatsRetVol;
+
+
+-- Criação de uma nova coluna chamada Média que é o calculo da alta e baixa de valores
+ALTER TABLE [BTC].[dbo].[bitcoin_data_analise]
+ADD media AS (([high] + [low]) / 2.0) PERSISTED;
+
+
+-- Define uma Tabela Temporária (CTE) para preparar os dados
+WITH MonthlyData AS (
+    SELECT
+        *, -- Pega todas as colunas originais (incluindo a coluna 'media', se existir)
+        YEAR([timestamp]) AS Ano, -- Extrai o Ano da data
+        MONTH([timestamp]) AS Mes, -- Extrai o Mês da data
+        -- Número de linha para pegar o ÚLTIMO dia do mês (rn_desc = 1)
+        ROW_NUMBER() OVER(PARTITION BY YEAR([timestamp]), MONTH([timestamp]) ORDER BY [timestamp] DESC) as rn_desc
+    FROM
+        [BTC].[dbo].[bitcoin_data_analise] -- Sua tabela original
+)
+-- Agora, seleciona e agrupa os dados da CTE
+SELECT
+    -- 1. Cria a coluna 'AnoMes' no formato 'YYYY - MM' (ex: '2019 - 01')
+    FORMAT(MIN([timestamp]), 'yyyy - MM') AS AnoMes,
+
+    -- 2. Pega o valor MÁXIMO de 'high' que ocorreu durante o mês todo
+    MAX([high]) AS High_Mes,
+
+    -- 3. Pega o valor MÍNIMO de 'low' que ocorreu durante o mês todo
+    MIN([low]) AS Low_Mes,
+
+    -- 4. Pega o valor 'close' do ÚLTIMO dia do mês (onde rn_desc = 1)
+    MAX(CASE WHEN rn_desc = 1 THEN [close] ELSE NULL END) AS Close_Mes,
+
+    -- 5. SOMA todo o 'volume' negociado no mês (Volume Total Mensal)
+    SUM([volume]) AS Volume_Total_Mes,
+
+    -- 6. Calcula a MÉDIA MENSAL da 'volatilidade_30' diária (AVG já divide pela contagem de dias)
+    AVG([volatilidade_30]) AS Volatilidade_Media_Mes,
+
+    -- 7. Calcula a MÉDIA MENSAL da coluna 'media' (AVG já divide pela contagem de dias)
+    --    Se a coluna 'media' foi criada com ALTER TABLE, esta linha usa essa coluna.
+    --    Se a coluna 'media' não existir, use a linha comentada abaixo.
+    AVG([media]) AS Media_Preco_Mes
+    -- Alternativa (caso a coluna 'media' não exista na tabela):
+    -- AVG(([high] + [low]) / 2.0) AS Media_Preco_Mes
+
+-- Indica de onde vêm os dados (da CTE 'MonthlyData')
+FROM MonthlyData
+
+-- Agrupa todas as linhas que têm o mesmo Ano e Mês juntos
+GROUP BY
+    Ano, -- Agrupa pelo ano extraído
+    Mes  -- Agrupa pelo mês extraído
+
+-- Ordena o resultado final por Ano e depois por Mês
+ORDER BY
+    Ano,
+    Mes;
+
+
+	-- ****************************************************************
+-- Script para criar uma NOVA TABELA com dados mensais agregados
+-- ****************************************************************
+
+-- Passo 1: (Opcional, mas recomendado) Remover a tabela antiga se ela existir
+-- Isso permite que você re-execute o script para atualizar os dados.
+IF OBJECT_ID('[BTC].[dbo].[bitcoin_data_mensal]', 'U') IS NOT NULL
+    DROP TABLE [BTC].[dbo].[bitcoin_data_mensal];
+GO
+
+-- Passo 2: Criar a nova tabela e inserir os dados agregados usando SELECT INTO
+
+-- Define a CTE para preparar os dados diários
+WITH MonthlyData AS (
+    SELECT
+        *, -- Pega todas as colunas originais (incluindo 'media')
+        YEAR([timestamp]) AS Ano, -- Extrai o Ano da data
+        MONTH([timestamp]) AS Mes, -- Extrai o Mês da data
+        -- Número de linha para pegar o ÚLTIMO dia do mês (rn_desc = 1)
+        ROW_NUMBER() OVER(PARTITION BY YEAR([timestamp]), MONTH([timestamp]) ORDER BY [timestamp] DESC) as rn_desc
+    FROM
+        [BTC].[dbo].[bitcoin_data_analise] -- Sua tabela DIÁRIA original
+)
+-- Seleciona os dados agregados e os insere na NOVA tabela
+SELECT
+    -- 1. Coluna 'AnoMes' no formato 'YYYY - MM'
+    FORMAT(MIN([timestamp]), 'yyyy - MM') AS AnoMes,
+
+    -- 2. Coluna com o valor MÁXIMO de 'high' do mês
+    MAX([high]) AS High_Mes,
+
+    -- 3. Coluna com o valor MÍNIMO de 'low' do mês
+    MIN([low]) AS Low_Mes,
+
+    -- 4. Coluna com o valor 'close' do ÚLTIMO dia do mês
+    MAX(CASE WHEN rn_desc = 1 THEN [close] ELSE NULL END) AS Close_Mes,
+
+    -- 5. Coluna com a SOMA do 'volume' negociado no mês
+    SUM([volume]) AS Volume_Total_Mes,
+
+    -- 6. Coluna com a MÉDIA MENSAL da 'volatilidade_30' diária
+    AVG([volatilidade_30]) AS Volatilidade_Media_Mes,
+
+    -- 7. Coluna com a MÉDIA MENSAL da coluna 'media'
+    AVG([media]) AS Media_Preco_Mes
+    -- Alternativa (caso a coluna 'media' não exista na tabela original):
+    -- AVG(([high] + [low]) / 2.0) AS Media_Preco_Mes
+
+INTO -- << Comando chave para criar a nova tabela
+    [BTC].[dbo].[bitcoin_data_mensal] -- << Nome da sua NOVA tabela MENSAL
+
+-- Indica de onde vêm os dados (da CTE 'MonthlyData')
+FROM MonthlyData
+
+-- Agrupa todas as linhas que têm o mesmo Ano e Mês juntos
+GROUP BY
+    Ano, -- Agrupa pelo ano extraído
+    Mes; -- Agrupa pelo mês extraído
+GO
+
+-- Passo 3: (Opcional) Verificar os dados na nova tabela criada
+SELECT TOP 10 *
+FROM [BTC].[dbo].[bitcoin_data_mensal]
+ORDER BY AnoMes; -- Ordena para visualização
+GO
