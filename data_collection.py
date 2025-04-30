@@ -2,6 +2,9 @@ import pandas as pd
 from binance.client import Client
 import os
 from datetime import datetime
+from dotenv import load_dotenv # Importar dotenv
+
+load_dotenv() # Carregar variáveis do arquivo .env
 
 def validar_datas(start_date, end_date):
     try:
@@ -14,8 +17,14 @@ def validar_datas(start_date, end_date):
         raise ValueError(f"Erro ao validar datas: {e}")
 
 def obter_dados_binance(symbol, start_date, end_date, interval=Client.KLINE_INTERVAL_1DAY, cache_dir="cache"):
-    api_key = 'sua key'  # Substitua com sua chave real
-    api_secret = 'sua key' # Substitua com seu segredo real
+    # Ler credenciais das variáveis de ambiente
+    api_key = os.getenv('BINANCE_API_KEY')
+    api_secret = os.getenv('BINANCE_API_SECRET')
+
+    # Validar se as variáveis foram carregadas
+    if not api_key or not api_secret:
+        raise ValueError("As variáveis de ambiente BINANCE_API_KEY e BINANCE_API_SECRET não foram definidas.")
+
 
     #Validar datas
     start_date, end_date = validar_datas(start_date, end_date)

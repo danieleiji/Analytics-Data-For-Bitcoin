@@ -1,0 +1,14 @@
+# Arquivos de ambiente
+.env
+
+# Outros arquivos a ignorar (cache, venv, etc.)
+cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*build*/
+*dist*/
+*.egg-info/
+venv/
+*.csv # Adicione se não quiser versionar os CSVs gerados

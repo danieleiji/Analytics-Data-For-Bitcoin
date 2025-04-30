@@ -1,6 +1,10 @@
 import pyodbc
 import pandas as pd
 from datetime import datetime
+import os # Importar os
+from dotenv import load_dotenv # Importar dotenv
+
+load_dotenv() # Carregar variáveis do arquivo .env
 
 def validar_datas(start_date, end_date):
     try:
@@ -13,12 +17,16 @@ def validar_datas(start_date, end_date):
         raise ValueError(f"Erro ao validar datas: {e}")
 
 def conectar_sql_server():
-    #Configurações de conexão
-    server = 'seu_servidor'  #coloque o seu servidor
-    database = 'bitcoin_analysis'  #coloque o seu banco de dados
-    username = 'seu_usuario' #coloque o seu usuario
-    password = 'sua_senha'  #coloque sua senha
-    
+    # Ler credenciais das variáveis de ambiente
+    server = os.getenv('DB_SERVER')
+    database = os.getenv('DB_NAME')
+    username = os.getenv('DB_USERNAME')
+    password = os.getenv('DB_PASSWORD')
+
+    # Validar se as variáveis foram carregadas
+    if not all([server, database, username, password]):
+        raise ValueError("Variáveis de ambiente para conexão com SQL Server não definidas (DB_SERVER, DB_NAME, DB_USERNAME, DB_PASSWORD).")
+
     cnxn = pyodbc.connect(
         f'DRIVER={{ODBC Driver 17 for SQL Server}};'
         f'SERVER={server};'
@@ -62,6 +70,8 @@ def preparar_dados_para_powerbi(df):
     return df
 
 if __name__ == '__main__':
+    # Definir cnxn como None inicialmente para o bloco finally
+    cnxn = None
     try:
         # Validar datas
         start_date_str = "1 Jan, 2019"
@@ -102,5 +112,6 @@ if __name__ == '__main__':
     except Exception as e:
       print(f"Erro ao processar dados: {e}")
     finally:
+        # Verificar se cnxn foi inicializado antes de tentar fechar
         if cnxn:
             cnxn.close()
