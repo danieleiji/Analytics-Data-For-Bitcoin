@@ -12,3 +12,7 @@ __pycache__/
 *.egg-info/
 venv/
 *.csv # Adicione se não quiser versionar os CSVs gerados
+venv37/
+
+# Arquivos de inicialização
+inicializações.txt
