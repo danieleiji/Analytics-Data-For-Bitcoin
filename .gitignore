@@ -10,8 +10,6 @@ __pycache__/
 *dist*/
 *.egg-info/
 
-# Ambiente virtual
-venv37/
 
 # Dados (brutos e processados)
 data/processed/
@@ -19,3 +17,12 @@ data/raw/
 
 # Arquivos de inicialização
 inicializações.txt
+
+# Ambiente virtual
+venv37/
+
+# Arquivos de execução
+Execução.txt
+
+# Diretório de documentação
+docs/
