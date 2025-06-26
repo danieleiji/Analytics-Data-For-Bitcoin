@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Real-Time - Chart.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/min/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            box-sizing: border-box;
+        }
+        .header {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 1rem;
+        }
+        .btn-back {
+            display: inline-block;
+            background-color: #718096;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-back:hover {
+            background-color: #4a5568;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            color: #1a202c;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        #chart-container {
+            width: 100%;
+            height: 450px;
+        }
+        .status {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="btn-back">&larr; Voltar</a>
+    </div>
+    <div class="container">
+        <h1 id="chart-title">Bitcoin Price - Real-Time (Chart.js)</h1>
+        <div id="chart-container">
+            <canvas id="chart"></canvas>
+        </div>
+        <div id="status" class="status">Conectando ao servidor...</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const ctx = document.getElementById('chart').getContext('2d');
+            const statusDiv = document.getElementById('status');
+            const title = document.getElementById('chart-title');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const tableName = urlParams.get('table');
+
+            if (!tableName) {
+                statusDiv.textContent = "Erro: Nenhuma tabela especificada na URL.";
+                title.textContent = "Erro";
+                return;
+            }
+
+            title.textContent = `Bitcoin Price - ${tableName} (Chart.js)`;
+
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Bitcoin Price (USD)',
+                        data: [],
+                        borderColor: '#ff9900',
+                        backgroundColor: 'rgba(255, 153, 0, 0.2)',
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Sequential ID' } },
+                        y: { title: { display: true, text: 'Price (USD)' } }
+                    },
+                    animation: { duration: 0 }
+                }
+            });
+
+            statusDiv.textContent = `Carregando dados históricos de ${tableName}...`;
+
+            try {
+                const response = await fetch(`/api/data/${tableName}`);
+                const historicalData = await response.json();
+
+                if (historicalData.data && historicalData.data.length > 0) {
+                    chart.data.labels = historicalData.data.map(p => p.id);
+                    chart.data.datasets[0].data = historicalData.data.map(p => p.value);
+                    chart.update('none');
+                    statusDiv.textContent = "Dados históricos carregados. Aguardando atualizações...";
+                } else {
+                    statusDiv.textContent = `Nenhum dado histórico para ${tableName}. Aguardando novos dados...`;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados históricos:', error);
+                statusDiv.textContent = "Erro ao carregar dados históricos.";
+                statusDiv.style.color = '#e53e3e';
+                return;
+            }
+
+            const socket = new WebSocket(`ws://${window.location.host}/ws`);
+
+            socket.onopen = function(event) {
+                console.log("Conexão WebSocket bem-sucedida.");
+            };
+
+            socket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+
+                if (message.table !== tableName) {
+                    return;
+                }
+
+                const dataPoints = message.points;
+                if (!Array.isArray(dataPoints) || dataPoints.length === 0) return;
+
+                statusDiv.textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+
+                dataPoints.forEach(point => {
+                    chart.data.labels.push(point.id);
+                    chart.data.datasets[0].data.push(point.value);
+                });
+                chart.update('none');
+            };
+
+            socket.onclose = function(event) {
+                statusDiv.textContent = "Conexão perdida. Por favor, atualize a página.";
+                statusDiv.style.color = '#e53e3e';
+            };
+
+            socket.onerror = function(error) {
+                statusDiv.textContent = "Falha ao conectar ao WebSocket.";
+                statusDiv.style.color = '#e53e3e';
+            };
+        });
+    </script>
+</body>
+</html>

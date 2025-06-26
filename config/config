@@ -1,0 +1,9 @@
+# Credenciais Binance
+BINANCE_API_KEY=SUA_CHAVE_API_REAL_AQUI
+BINANCE_API_SECRET=SEU_SEGREDO_API_REAL_AQUI
+
+# Credenciais SQL Server
+DB_SERVER=seu_servidor_real
+DB_NAME=bitcoin_analysis
+DB_USERNAME=seu_usuario_real
+DB_PASSWORD=sua_senha_real

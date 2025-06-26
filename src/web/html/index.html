@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleção de Gráfico - Análise Bitcoin</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+        }
+
+        h1 {
+            color: #1a202c;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            color: #4a5568;
+        }
+
+        .select-container {
+            margin-bottom: 1.5rem;
+        }
+
+        select {
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            min-width: 250px;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #ff9900;
+            color: #ffffff;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 0.5rem;
+            transition: background-color 0.3s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #e68a00;
+            transform: translateY(-2px);
+        }
+
+        .btn-plotly {
+            background-color: #337ab7;
+        }
+
+        .btn-plotly:hover {
+            background-color: #286090;
+        }
+
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Visualizador de Dados Bitcoin em Tempo Real</h1>
+        <p>Selecione a tabela de dados para visualizar:</p>
+        
+        <div class="select-container">
+            <select id="tables-select">
+                <option>Carregando tabelas...</option>
+            </select>
+        </div>
+
+        <div>
+            <button id="btn-plotly" class="btn btn-plotly">Usar Plotly.js</button>
+            <button id="btn-chartjs" class="btn">Usar Chart.js</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const select = document.getElementById('tables-select');
+            const btnPlotly = document.getElementById('btn-plotly');
+            const btnChartjs = document.getElementById('btn-chartjs');
+
+            btnPlotly.disabled = true;
+            btnChartjs.disabled = true;
+
+            try {
+                const response = await fetch('/api/tables');
+                const data = await response.json();
+
+                if (data.tables && data.tables.length > 0) {
+                    select.innerHTML = '';
+                    data.tables.forEach(table => {
+                        const option = document.createElement('option');
+                        option.value = table;
+                        option.textContent = table;
+                        select.appendChild(option);
+                    });
+                    btnPlotly.disabled = false;
+                    btnChartjs.disabled = false;
+                } else {
+                    select.innerHTML = '<option>Nenhuma tabela encontrada</option>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar tabelas:', error);
+                select.innerHTML = '<option>Erro ao carregar tabelas</option>';
+            }
+
+            function openChart(type) {
+                const selectedTable = select.value;
+                if (selectedTable) {
+                    window.location.href = `/${type}?table=${selectedTable}`;
+                } else {
+                    alert('Por favor, selecione uma tabela.');
+                }
+            }
+
+            btnPlotly.addEventListener('click', () => openChart('plotly'));
+            btnChartjs.addEventListener('click', () => openChart('chartjs'));
+        });
+    </script>
+
+</body>
+</html>

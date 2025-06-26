@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Real-Time - Plotly.js</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            box-sizing: border-box;
+        }
+        .header {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 1rem;
+        }
+        .btn-back {
+            display: inline-block;
+            background-color: #718096;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn-back:hover {
+            background-color: #4a5568;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 100%;
+            max-width: 900px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            color: #1a202c;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        #chart {
+            width: 100%;
+            height: 450px;
+        }
+        .status {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="btn-back">&larr; Voltar</a>
+    </div>
+    <div class="container">
+        <h1 id="chart-title">Bitcoin Price - Real-Time (Plotly.js)</h1>
+        <div id="chart"></div>
+        <div id="status" class="status">Conectando ao servidor...</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const chartDiv = document.getElementById('chart');
+            const statusDiv = document.getElementById('status');
+            const title = document.getElementById('chart-title');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const tableName = urlParams.get('table');
+
+            if (!tableName) {
+                statusDiv.textContent = "Erro: Nenhuma tabela especificada na URL.";
+                title.textContent = "Erro";
+                return;
+            }
+
+            title.textContent = `Bitcoin Price - ${tableName} (Plotly.js)`;
+
+            const trace = {
+                x: [],
+                y: [],
+                mode: 'lines',
+                type: 'scatter',
+                line: { color: '#337ab7', width: 2 }
+            };
+
+            const layout = {
+                title: 'Live Price Feed',
+                xaxis: { title: 'Sequential ID' },
+                yaxis: { title: 'Price (USD)' },
+                margin: { l: 50, r: 50, b: 40, t: 40 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#333' }
+            };
+
+            Plotly.newPlot(chartDiv, [trace], layout, { responsive: true });
+            statusDiv.textContent = `Carregando dados históricos de ${tableName}...`;
+
+            try {
+                const response = await fetch(`/api/data/${tableName}`);
+                const historicalData = await response.json();
+
+                if (historicalData.data && historicalData.data.length > 0) {
+                    const x_hist = historicalData.data.map(p => p.id);
+                    const y_hist = historicalData.data.map(p => p.value);
+                    Plotly.update(chartDiv, { x: [x_hist], y: [y_hist] });
+                    statusDiv.textContent = "Dados históricos carregados. Aguardando atualizações...";
+                } else {
+                    statusDiv.textContent = `Nenhum dado histórico para ${tableName}. Aguardando novos dados...`;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados históricos:', error);
+                statusDiv.textContent = "Erro ao carregar dados históricos.";
+                statusDiv.style.color = '#e53e3e';
+                return;
+            }
+
+            const socket = new WebSocket(`ws://${window.location.host}/ws`);
+
+            socket.onopen = function(event) {
+                console.log("Conexão WebSocket bem-sucedida.");
+            };
+
+            socket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                
+                if (message.table !== tableName) {
+                    return;
+                }
+
+                const dataPoints = message.points;
+                if (!Array.isArray(dataPoints) || dataPoints.length === 0) return;
+
+                statusDiv.textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+
+                const newX = dataPoints.map(p => p.id);
+                const newY = dataPoints.map(p => p.value);
+
+                Plotly.extendTraces(chartDiv, { x: [newX], y: [newY] }, [0]);
+            };
+
+            socket.onclose = function(event) {
+                statusDiv.textContent = "Conexão perdida. Por favor, atualize a página.";
+                statusDiv.style.color = '#e53e3e';
+            };
+
+            socket.onerror = function(error) {
+                statusDiv.textContent = "Falha ao conectar ao WebSocket.";
+                statusDiv.style.color = '#e53e3e';
+            };
+        });
+    </script>
+</body>
+</html>

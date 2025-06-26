@@ -1,0 +1,11 @@
+.\venv37\Scripts\activate
+python Data_daily_btc.py
+
+docker ps
+docker run --name btc -p 9042:9042 -d cassandra:latest
+docker exec -it Btc cqlsh 127.0.0.1 9042
+docker exec -it Btc cqlsh
+
+SELECT * FROM btc_2025_06_22 WHERE day_partition = '2025-06-22' ORDER BY sequential_id ASC;
+
+uvicorn src.main.server:app --reload

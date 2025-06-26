@@ -1,8 +1,7 @@
 # Arquivos de ambiente
 .env
 
-# Outros arquivos a ignorar (cache, venv, etc.)
-cache/
+# Outros arquivos a ignorar
 __pycache__/
 *.pyc
 *.pyo
@@ -10,9 +9,13 @@ __pycache__/
 *build*/
 *dist*/
 *.egg-info/
-venv/
-*.csv # Adicione se não quiser versionar os CSVs gerados
+
+# Ambiente virtual
 venv37/
+
+# Dados (brutos e processados)
+data/processed/
+data/raw/
 
 # Arquivos de inicialização
 inicializações.txt
