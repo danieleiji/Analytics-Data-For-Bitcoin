@@ -9,3 +9,12 @@ docker exec -it Btc cqlsh
 SELECT * FROM btc_2025_06_22 WHERE day_partition = '2025-06-22' ORDER BY sequential_id ASC;
 
 uvicorn src.main.server:app --reload
+
+
+## 📈 Roadmap e Futuras Melhorias
+
+- [ ] Adicionar GIFs e vídeos de demonstração do sistema em funcionamento.
+- [ ] Criar um arquivo `requirements.txt` para facilitar a instalação das dependências.
+- [ ] Implementar um sistema de autenticação para o acesso web.
+- [ ] Expandir as análises estatísticas e adicionar modelos de machine learning para previsão de preços.
+- [ ] Melhorar a interface do usuário (UI/UX) tanto na aplicação desktop quanto na web.
