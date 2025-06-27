@@ -32,10 +32,3 @@
       ```
     - Acesse a interface web em `http://127.0.0.1:8000`.
 
-## 📈 Roadmap e Futuras Melhorias
-
-- [ ] Adicionar GIFs e vídeos de demonstração do sistema em funcionamento.
-- [ ] Criar um arquivo `requirements.txt` para facilitar a instalação das dependências.
-- [ ] Implementar um sistema de autenticação para o acesso web.
-- [ ] Expandir as análises estatísticas e adicionar modelos de machine learning para previsão de preços.
-- [ ] Melhorar a interface do usuário (UI/UX) tanto na aplicação desktop quanto na web.
