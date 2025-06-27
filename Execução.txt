@@ -1,0 +1,41 @@
+
+## 🚀 Como Executar
+
+1.  **Clone o Repositório**:
+    ```bash
+    git clone https://github.com/seu-usuario/Analytics-Data-For-Bitcon.git
+    cd Analytics-Data-For-Bitcon
+    ```
+
+2.  **Configure o Ambiente**:
+    - Ative o ambiente virtual: `.\venv37\Scripts\activate`
+    - (Se necessário) Instale as dependências: `pip install -r requirements.txt` (Nota: um arquivo `requirements.txt` precisaria ser gerado).
+
+3.  **Configure as Credenciais**:
+    - Renomeie ou copie `config/config` para `.env` na raiz do projeto.
+    - Preencha o arquivo `.env` com suas chaves da API da Binance e credenciais do SQL Server.
+
+4.  **Bancos de Dados**:
+    - Inicie uma instância do Cassandra. O comando `docker run --name btc -p 9042:9042 -d cassandra:latest` pode ser usado.
+    - Certifique-se de que seu SQL Server está acessível e execute os scripts de criação de tabela necessários de `src/sql/`.
+
+5.  **Execute as Aplicações**:
+
+    - **Para a Aplicação Desktop**:
+      ```bash
+      python src\main\Data_daily_btc.py
+      ```
+
+    - **Para o Servidor Web**:
+      ```bash
+      uvicorn src.main.server:app --reload
+      ```
+    - Acesse a interface web em `http://127.0.0.1:8000`.
+
+## 📈 Roadmap e Futuras Melhorias
+
+- [ ] Adicionar GIFs e vídeos de demonstração do sistema em funcionamento.
+- [ ] Criar um arquivo `requirements.txt` para facilitar a instalação das dependências.
+- [ ] Implementar um sistema de autenticação para o acesso web.
+- [ ] Expandir as análises estatísticas e adicionar modelos de machine learning para previsão de preços.
+- [ ] Melhorar a interface do usuário (UI/UX) tanto na aplicação desktop quanto na web.
